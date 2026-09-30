@@ -196,16 +196,40 @@
     },
     "light": {
       "tzl_zone_light": {
-        "name": "Chromazone light"
+        "name": "Chromazone light",
+        "state": {
+          "NORMAL": "Normal",
+          "PARTY": "Party",
+          "RELAX": "Relax",
+          "WHEEL": "Wheel"
+        }
       },
       "tzl_zone_light_1": {
-        "name": "Chromazone light A"
+        "name": "Chromazone light A",
+        "state": {
+          "NORMAL": "Normal",
+          "PARTY": "Party",
+          "RELAX": "Relax",
+          "WHEEL": "Wheel"
+        }
       },
       "tzl_zone_light_2": {
-        "name": "Chromazone light B"
+        "name": "Chromazone light B",
+        "state": {
+          "NORMAL": "Normal",
+          "PARTY": "Party",
+          "RELAX": "Relax",
+          "WHEEL": "Wheel"
+        }
       },
       "tzl_zone_light_3": {
-        "name": "Chromazone light C"
+        "name": "Chromazone light C",
+        "state": {
+          "NORMAL": "Normal",
+          "PARTY": "Party",
+          "RELAX": "Relax",
+          "WHEEL": "Wheel"
+        }
       }
     },
     "select": {

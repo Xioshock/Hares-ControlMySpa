@@ -210,16 +210,40 @@
     },
     "light": {
       "tzl_zone_light": {
-        "name": "Chromazone - Světlo"
+        "name": "Chromazone - Světlo",
+        "state": {
+          "NORMAL": "Normální",
+          "PARTY": "Párty",
+          "RELAX": "Relax",
+          "WHEEL": "Kolo"
+        }
       },
       "tzl_zone_light_1": {
-        "name": "Chromazone - Světlo A"
+        "name": "Chromazone - Světlo A",
+        "state": {
+          "NORMAL": "Normální",
+          "PARTY": "Párty",
+          "RELAX": "Relax",
+          "WHEEL": "Kolo"
+        }
       },
       "tzl_zone_light_2": {
-        "name": "Chromazone - Světlo B"
+        "name": "Chromazone - Světlo B",
+        "state": {
+          "NORMAL": "Normální",
+          "PARTY": "Párty",
+          "RELAX": "Relax",
+          "WHEEL": "Kolo"
+        }
       },
       "tzl_zone_light_3": {
-        "name": "Chromazone - Světlo C"
+        "name": "Chromazone - Světlo C",
+        "state": {
+          "NORMAL": "Normální",
+          "PARTY": "Párty",
+          "RELAX": "Relax",
+          "WHEEL": "Kolo"
+        }
       }
     },
     "select": {

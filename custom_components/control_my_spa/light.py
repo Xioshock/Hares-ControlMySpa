@@ -1,4 +1,4 @@
-from homeassistant.components.light import LightEntity, ColorMode, LightEntityFeature
+from homeassistant.components.light import EFFECT_OFF, LightEntity, ColorMode, LightEntityFeature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from .const import DOMAIN
@@ -7,6 +7,7 @@ from .tzl_utils import tzl_zone_is_off, tzl_zone_is_on
 import logging
 
 _LOGGER = logging.getLogger(__name__)
+TZL_EFFECTS = ("NORMAL", "PARTY", "RELAX", "WHEEL")
 
 def async_set_favorite_colors(hass: HomeAssistant, entity_id: str, colors: list[tuple[int, int, int]] | None) -> None:
     """Nastaví oblíbené barvy pro light entity pomocí entity registry options."""
@@ -77,13 +78,15 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
     _attr_has_entity_name = True
     _attr_supported_color_modes = {ColorMode.RGB}  # RGB pro výběrové barvy (jas je součástí RGB)
     _attr_color_mode = ColorMode.RGB
-    _attr_supported_features = LightEntityFeature(0)  # Žádné speciální funkce
+    _attr_supported_features = LightEntityFeature.EFFECT
+    _attr_effect_list = list(TZL_EFFECTS)
 
     def __init__(self, shared_data, device_info, unique_id_suffix, tzl_zone_data, count_tzl_zones):
         self._shared_data = shared_data
         self._tzl_zone_data = tzl_zone_data
         self._attr_should_poll = False  # Data jsou sdílena, posluchač
         self._attr_is_on = False
+        self._attr_effect = EFFECT_OFF
         self._attr_rgb_color = (0, 0, 0)  # RGB formát
         self._attr_brightness = 0
         self._attr_device_info = device_info
@@ -152,6 +155,13 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
                 # A zone switched off individually can report intensity 0
                 # while its state remains NORMAL.
                 self._attr_is_on = tzl_zone_is_on(tzl_zone)
+                mode = tzl_zone.get("state")
+                self._attr_effect = mode if self._attr_is_on and mode in TZL_EFFECTS else EFFECT_OFF
+                self._attr_color_mode = (
+                    ColorMode.BRIGHTNESS
+                    if self._attr_effect in {"PARTY", "RELAX", "WHEEL"}
+                    else ColorMode.RGB
+                )
                 
                 # Nastavit RGB barvu
                 red = tzl_zone.get("red", 0)
@@ -196,11 +206,6 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
     def supported_color_modes(self):
         """Vrátí podporované barevné módy - RGB pro výběrové barvy + jas."""
         return {ColorMode.RGB}
-
-    @property
-    def supported_features(self):
-        """Vrátí podporované funkce."""
-        return LightEntityFeature(0)
 
     # Odstraněna property metoda - Home Assistant čte přímo _attr_supported_color_list
     
@@ -258,6 +263,13 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
             ),
             None,
         )
+
+    async def _async_set_tzl_effect(self, effect):
+        """Send a zone mode through the same API used by the mode select."""
+        zone_id = self._tzl_zone_data["zoneId"]
+        if effect == "NORMAL":
+            return await self._shared_data._client.setChromazoneColor(0, zone_id)
+        return await self._shared_data._client.setChromazoneFunction(effect, zone_id)
 
     @staticmethod
     def _all_tzl_zones_off(data) -> bool:
@@ -322,6 +334,11 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
         data = self._shared_data.data
         if not data:
             _LOGGER.error("No data available for TZL zone control")
+            return
+
+        requested_effect = kwargs.get("effect")
+        if requested_effect is not None and requested_effect not in TZL_EFFECTS:
+            _LOGGER.warning("Unsupported TZL effect: %s", requested_effect)
             return
             
         try:
@@ -405,6 +422,7 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
                     _LOGGER.warning("Function setChromazoneBrightness, parameter %s is not supported", intensity)
                 else:
                     _LOGGER.info("Successfully set TZL zone %s intensity to %s", self._tzl_zone_data["zoneId"], intensity)
+                    response_data = intensity_response
             
             # Zpracovat barvu z výběrových barev
             if "rgb_color" in kwargs:
@@ -431,6 +449,7 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
                         _LOGGER.warning("Function setChromazoneColor, parameter %s is not supported", color_id)
                     else:
                         _LOGGER.info("Successfully set TZL zone %s color to color_id %s", self._tzl_zone_data["zoneId"], color_id)
+                        response_data = color_response
                 else:
                     _LOGGER.warning("Selected color %s not found in available colors: %s", rgb, available_rgb_colors)
                     # Najít nejbližší dostupnou barvu
@@ -452,6 +471,24 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
                         )
                         if color_response:
                             _LOGGER.info("Successfully set closest TZL zone %s color to color_id %s", self._tzl_zone_data["zoneId"], color_id)
+                            response_data = color_response
+
+            if requested_effect is not None:
+                # A light effect is the same command as the existing zone mode
+                # select. Keep the select for existing dashboards and automations.
+                effect_zone = self._get_tzl_zone(response_data)
+                if effect_zone is None or effect_zone.get("state") != requested_effect:
+                    for attempt in range(2):
+                        effect_response = await self._async_set_tzl_effect(requested_effect)
+                        effect_zone = self._get_tzl_zone(effect_response) if effect_response else None
+                        if effect_zone is not None and effect_zone.get("state") == requested_effect:
+                            break
+                        _LOGGER.warning(
+                            "TZL zone %s did not enter effect %s (attempt %s)",
+                            self._tzl_zone_data["zoneId"],
+                            requested_effect,
+                            attempt + 1,
+                        )
             
             await self._shared_data.async_force_update()
         except Exception as e:

@@ -177,11 +177,13 @@ If your spa has **Chromazone / TZL** zones, you get lighting control in Home Ass
 
 | What | How |
 |------|-----|
-| Per zone colour & brightness | **Light** — RGB |
-| Mode (Party, Relax, Wheel, …) | **Select** per zone |
-| Preset colours, intensity, speed | **Select** per zone |
+| Per zone on/off, colour & brightness | **Light** — RGB |
+| Mode (Normal, Party, Relax, Wheel) | **Effect** on each light; the existing mode select also works |
+| Speed (0–5) | **Select** per zone |
+| Preset colours and intensity | **Select** per zone |
+| Global Chromazone power | Managed automatically when switching zone lights |
 
-Available modes include **OFF**, **NORMAL**, **PARTY**, **RELAX**, and **WHEEL**. Intensity and transition speed use the ranges your spa supports (typically intensity 0–8, speed 0–5).
+Turn a zone off with its light switch. The effect picker offers **NORMAL**, **PARTY**, **RELAX**, and **WHEEL**. Intensity and transition speed use the ranges your spa supports (typically intensity 0–8, speed 0–5).
 
 Use Lovelace light cards, automations, or voice assistants (via Home Assistant) like any other light.
 
