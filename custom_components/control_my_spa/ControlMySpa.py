@@ -368,6 +368,11 @@ class ControlMySpa:
             "state": power_state,
         })
 
+    @staticmethod
+    def _chromazone_location(zone):
+        """Convert the dashboard zone ID (1-based) to the API location (0-based)."""
+        return max(0, int(zone) - 1)
+
     async def setChromazoneFunction(self, zone_state, zone):
         # Set the zone mode (PARTY, RELAX, WHEEL). Turn off an individual
         # zone using setChromazoneBrightness(0, zone).
@@ -375,7 +380,7 @@ class ControlMySpa:
             "spaId": self.spaId,
             "via": "MOBILE",
             "state": zone_state,
-            "location": int(zone),
+            "location": self._chromazone_location(zone),
             "locationType": "ZONE",
         })
     
@@ -385,7 +390,7 @@ class ControlMySpa:
             "spaId": self.spaId,
             "via": "MOBILE",
             "color": color_id,
-            "location": int(zone),
+            "location": self._chromazone_location(zone),
             "locationType": "ZONE",
         })
 
@@ -395,7 +400,7 @@ class ControlMySpa:
             "spaId": self.spaId,
             "via": "MOBILE",
             "intensity": intensity,
-            "location": int(zone),
+            "location": self._chromazone_location(zone),
             "locationType": "ZONE",
         })
 
@@ -405,7 +410,7 @@ class ControlMySpa:
             "spaId": self.spaId,
             "via": "MOBILE",
             "speed": speed,
-            "location": int(zone),
+            "location": self._chromazone_location(zone),
             "locationType": "ZONE",
         })
 
@@ -470,5 +475,4 @@ class ControlMySpa:
 
 
     
-
 
