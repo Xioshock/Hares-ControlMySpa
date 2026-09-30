@@ -370,8 +370,15 @@ class ControlMySpa:
 
     @staticmethod
     def _chromazone_location(zone):
-        """Convert the dashboard zone ID (1-based) to the API location (0-based)."""
-        return max(0, int(zone) - 1)
+        """Use the dashboard zone ID directly as the API location.
+
+        The dashboard and the command API both identify zones as 1-based
+        values: zone 1 is A, zone 2 is B, and zone 3 is C.
+        """
+        location = int(zone)
+        if not 1 <= location <= 4:
+            raise ValueError(f"Chromazone location must be between 1 and 4, got {zone}")
+        return location
 
     async def setChromazoneFunction(self, zone_state, zone):
         # Set the zone mode (PARTY, RELAX, WHEEL). Turn off an individual
@@ -475,4 +482,3 @@ class ControlMySpa:
 
 
     
-
