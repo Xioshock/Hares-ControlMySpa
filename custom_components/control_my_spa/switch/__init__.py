@@ -6,9 +6,9 @@ from .components import SpaLightSwitch, SpaBlowerSwitch
 from .pump import SpaPumpSwitch
 from .pump_low import SpaPumpLowSwitch
 from .filter import SpaFilter2Switch
-from .tzl import SpaTzlPowerSwitch
 from .panel import SpaPanelLockSwitch
 from .microsilk import SpaMicrosilkSwitch
+from homeassistant.helpers import entity_registry as er
 import logging
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,10 +81,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     if len(filters) >= 2:
         entities.append(SpaFilter2Switch(shared_data, device_info, unique_id_suffix, client))
 
-    # Přidání TZL přepínače pouze pokud jsou k dispozici TZL zóny
-    tzl_zones = shared_data.data.get("tzlZones", [])
-    if tzl_zones:
-        entities.append(SpaTzlPowerSwitch(shared_data, device_info, unique_id_suffix, client))
+    # Per-zone lights manage the global TZL power gate internally. Remove the
+    # legacy all-zones switch from the registry if an earlier version created it.
+    registry = er.async_get(hass)
+    legacy_unique_id = f"switch.spa_tzl_power{unique_id_suffix}"
+    legacy_entity_id = registry.async_get_entity_id("switch", DOMAIN, legacy_unique_id)
+    if legacy_entity_id:
+        registry.async_remove(legacy_entity_id)
 
     entities.append(SpaPanelLockSwitch(shared_data, device_info, unique_id_suffix, client))
 
@@ -103,7 +106,6 @@ __all__ = [
     "SpaPumpLowSwitch",
     "SpaBlowerSwitch",
     "SpaFilter2Switch",
-    "SpaTzlPowerSwitch",
     "SpaPanelLockSwitch",
     "SpaMicrosilkSwitch",
     "async_setup_entry",
