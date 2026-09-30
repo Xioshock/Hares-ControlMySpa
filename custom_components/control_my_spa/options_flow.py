@@ -3,15 +3,17 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN
+from .const import DOMAIN, UPDATE_INTERVAL_SECONDS_KEY
 from .flow_helpers import (
     async_create_logged_in_client,
     async_verify_spa_dashboard,
     build_available_spas,
+    get_update_interval_seconds,
     log_spa_list,
     pop_spa_selection_fields,
     resolve_spa_id,
     spa_selection_schema_dict,
+    update_interval_selector,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -122,6 +124,14 @@ class ControlMySpaOptionsFlowHandler(config_entries.OptionsFlow):
             errors or None,
         )
         schema_dict = spa_selection_schema_dict(available_spas, current_spa_id)
+
+        schema_dict[vol.Optional(
+            UPDATE_INTERVAL_SECONDS_KEY,
+            default=get_update_interval_seconds(
+                self.config_entry.data,
+                current_config,
+            ),
+        )] = update_interval_selector()
         
         # Přidat položky pro pumpy
         # Home Assistant automaticky použije překlady z translations/{lang}.json
@@ -180,5 +190,3 @@ class ControlMySpaOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(schema_dict),
             errors=errors
         )
-
-

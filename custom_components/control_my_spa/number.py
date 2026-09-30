@@ -1,8 +1,15 @@
 from homeassistant.components.number import NumberEntity
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    MAX_UPDATE_INTERVAL_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
+    UPDATE_INTERVAL_SECONDS_KEY,
+    UPDATE_INTERVAL_STEP_SECONDS,
+)
 from .entity import SpaSubscriberMixin
+from .flow_helpers import get_update_interval_seconds
 import logging
 import asyncio
 
@@ -22,7 +29,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         return False
 
     # Vytvořit entitu pro targetDesiredTemp
-    entities = [SpaTargetDesiredTempNumber(shared_data, device_info, unique_id_suffix)]
+    entities = [
+        SpaTargetDesiredTempNumber(shared_data, device_info, unique_id_suffix),
+        SpaUpdateIntervalNumber(
+            shared_data,
+            device_info,
+            unique_id_suffix,
+            config_entry,
+        ),
+    ]
     async_add_entities(entities, True)
 
     _LOGGER.debug("START Number control_my_spa")
@@ -199,3 +214,67 @@ class SpaTargetDesiredTempNumber(SpaSubscriberMixin, NumberEntity):
         _LOGGER.info("Set new debounce delay to %.1f s", delay)
         self.async_write_ha_state()
 
+
+class SpaUpdateIntervalNumber(SpaSubscriberMixin, NumberEntity):
+    """Entity for changing the SPA data polling interval."""
+
+    _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_mode = "slider"
+    _attr_icon = "mdi:timer-refresh"
+    _attr_should_poll = False
+    _attr_translation_key = "update_interval"
+
+    native_min_value = MIN_UPDATE_INTERVAL_SECONDS
+    native_max_value = MAX_UPDATE_INTERVAL_SECONDS
+    native_step = UPDATE_INTERVAL_STEP_SECONDS
+    native_unit_of_measurement = "s"
+
+    def __init__(self, shared_data, device_info, unique_id_suffix, config_entry):
+        self._shared_data = shared_data
+        self._config_entry = config_entry
+        self._attr_device_info = device_info
+        self._attr_unique_id = f"number.spa_update_interval{unique_id_suffix}"
+        self.entity_id = self._attr_unique_id
+        self._state = get_update_interval_seconds(
+            config_entry.data,
+            config_entry.options,
+        )
+
+    @property
+    def available(self) -> bool:
+        """The local polling setting remains editable when the spa is offline."""
+        return True
+
+    @property
+    def native_value(self) -> int:
+        """Return the configured interval in seconds."""
+        return self._state
+
+    async def async_update(self):
+        """Refresh the value from the config entry."""
+        self._state = get_update_interval_seconds(
+            self._config_entry.data,
+            self._config_entry.options,
+        )
+
+    async def async_set_native_value(self, value: float):
+        """Persist a new polling interval and reload the integration."""
+        seconds = int(
+            round(float(value) / UPDATE_INTERVAL_STEP_SECONDS)
+            * UPDATE_INTERVAL_STEP_SECONDS
+        )
+        seconds = max(
+            MIN_UPDATE_INTERVAL_SECONDS,
+            min(MAX_UPDATE_INTERVAL_SECONDS, seconds),
+        )
+        self._state = seconds
+        self.hass.config_entries.async_update_entry(
+            self._config_entry,
+            options={
+                **self._config_entry.options,
+                UPDATE_INTERVAL_SECONDS_KEY: seconds,
+            },
+        )
+        self.async_write_ha_state()
+        _LOGGER.info("Set SPA update interval to %ss", seconds)

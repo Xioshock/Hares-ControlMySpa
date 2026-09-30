@@ -23,7 +23,8 @@
         "data": {
           "username": "Username",
           "password": "Password",
-          "updateintervalminutes": "Update interval (minutes)"
+          "updateintervalminutes": "Update interval (minutes)",
+          "update_interval_seconds": "Data update interval"
         },
         "description": "Connect to ControlMySpa",
         "title": "SPA"
@@ -53,6 +54,7 @@
         "data": {
           "spa_id": "SPA",
           "spa_id_manual": "SPA ID manually (if missing from the list)",
+          "update_interval_seconds": "Data update interval",
           "pump_1_power_watts": "Pump 1 power consumption (W)",
           "pump_2_power_watts": "Pump 2 power consumption (W)",
           "pump_3_power_watts": "Pump 3 power consumption (W)",
@@ -504,6 +506,9 @@
     "number": {
       "target_desired_temperature": {
         "name": "Target temperature"
+      },
+      "update_interval": {
+        "name": "Data update interval"
       }
     },
     "binary_sensor": {

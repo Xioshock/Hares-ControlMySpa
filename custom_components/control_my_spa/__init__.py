@@ -11,6 +11,7 @@ from .SpaData import SpaData
 from homeassistant.const import Platform
 from .services import async_setup_services, async_unload_services
 from .helpers import get_unique_id_suffix
+from .flow_helpers import get_update_interval_seconds
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [
@@ -40,7 +41,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     username = config_entry.data["username"]
     password = config_entry.data["password"]
     spa_id = config_entry.data["spa_id"]
-    minUpdate = config_entry.data.get("updateintervalminutes", 2)
+    update_interval_seconds = get_update_interval_seconds(
+        config_entry.data,
+        config_entry.options,
+    )
     _LOGGER.info("Current user locale: %s", hass.config.language)
 
     # translations = await hass.helpers.translation.async_get_translations(hass.config.language, "entity")
@@ -59,9 +63,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # Inicializace SpaData
     balboa_data = SpaData(spa_client, hass)
     await balboa_data.update()  # První aktualizace dat
-    balboa_data.start_periodic_update(timedelta(minutes=minUpdate))  # Pravidelná aktualizace
+    balboa_data.start_periodic_update(timedelta(seconds=update_interval_seconds))
 
-    _LOGGER.info("ControlMySpa INIT async_setup_entry. Interval:%s, SpaId:%s", minUpdate, spa_id)
+    _LOGGER.info(
+        "ControlMySpa INIT async_setup_entry. Interval:%ss, SpaId:%s",
+        update_interval_seconds,
+        spa_id,
+    )
 
     if not balboa_data.data:
         # No initial data — almost always a transient ControlMySpa cloud

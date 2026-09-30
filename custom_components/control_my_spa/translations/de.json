@@ -23,7 +23,8 @@
         "data": {
           "username": "Benutzername",
           "password": "Passwort",
-          "updateintervalminutes": "Aktualisierungsintervall (Minuten)"
+          "updateintervalminutes": "Aktualisierungsintervall (Minuten)",
+          "update_interval_seconds": "Datenaktualisierungsintervall"
         },
         "description": "Verbindet sich mit ControlMySpa",
         "title": "Whirlpool"
@@ -53,6 +54,7 @@
         "data": {
           "spa_id": "Whirlpool",
           "spa_id_manual": "SPA-ID manuell (falls nicht in der Liste)",
+          "update_interval_seconds": "Datenaktualisierungsintervall",
           "pump_1_power_watts": "Pumpenleistungsaufnahme 1 (W)",
           "pump_2_power_watts": "Pumpenleistungsaufnahme 2 (W)",
           "pump_3_power_watts": "Pumpenleistungsaufnahme 3 (W)",
@@ -500,6 +502,9 @@
     "number": {
       "target_desired_temperature": {
         "name": "Zieltemperatur"
+      },
+      "update_interval": {
+        "name": "Datenaktualisierungsintervall"
       }
     },
     "binary_sensor": {

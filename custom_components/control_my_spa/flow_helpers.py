@@ -2,13 +2,61 @@
 
 import logging
 import voluptuous as vol
+from homeassistant.helpers.selector import NumberSelector, NumberSelectorConfig
 
 from .ControlMySpa import ControlMySpa
+from .const import (
+    DEFAULT_UPDATE_INTERVAL_SECONDS,
+    LEGACY_UPDATE_INTERVAL_MINUTES_KEY,
+    MAX_UPDATE_INTERVAL_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
+    UPDATE_INTERVAL_SECONDS_KEY,
+    UPDATE_INTERVAL_STEP_SECONDS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 SPA_ID_KEY = "spa_id"
 SPA_ID_MANUAL_KEY = "spa_id_manual"
+
+
+def get_update_interval_seconds(data: dict | None, options: dict | None = None) -> int:
+    """Read the current polling interval, including legacy minute settings."""
+    for source in (options or {}, data or {}):
+        value = source.get(UPDATE_INTERVAL_SECONDS_KEY)
+        if value is not None:
+            try:
+                return max(
+                    MIN_UPDATE_INTERVAL_SECONDS,
+                    min(MAX_UPDATE_INTERVAL_SECONDS, int(value)),
+                )
+            except (TypeError, ValueError):
+                pass
+
+    legacy_minutes = (data or {}).get(LEGACY_UPDATE_INTERVAL_MINUTES_KEY)
+    try:
+        if legacy_minutes is not None:
+            return max(
+                MIN_UPDATE_INTERVAL_SECONDS,
+                min(MAX_UPDATE_INTERVAL_SECONDS, int(legacy_minutes) * 60),
+            )
+    except (TypeError, ValueError):
+        pass
+
+    return DEFAULT_UPDATE_INTERVAL_SECONDS
+
+
+def update_interval_selector() -> NumberSelector:
+    """Return the shared 10–180 second slider definition."""
+    return NumberSelector(
+        NumberSelectorConfig(
+            min=MIN_UPDATE_INTERVAL_SECONDS,
+            max=MAX_UPDATE_INTERVAL_SECONDS,
+            step=UPDATE_INTERVAL_STEP_SECONDS,
+            mode="slider",
+            unit_of_measurement="s",
+        )
+    )
 
 
 def format_spa_label(spa: dict) -> str:

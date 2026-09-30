@@ -23,7 +23,8 @@
         "data": {
           "username": "Uživatelské jméno",
           "password": "Heslo",
-          "updateintervalminutes": "Interval aktualizace (minuty)"
+          "updateintervalminutes": "Interval aktualizace (minuty)",
+          "update_interval_seconds": "Interval aktualizace dat"
       },
         "description": "Připojí se k ControlMySpa",
         "title": "Vířívá vana"
@@ -53,6 +54,7 @@
         "data": {
           "spa_id": "Vířivá vana",
           "spa_id_manual": "SPA ID ručně (pokud chybí v seznamu)",
+          "update_interval_seconds": "Interval aktualizace dat",
           "pump_1_power_watts": "Příkon čerpadla 1 (W)",
           "pump_2_power_watts": "Příkon čerpadla 2 (W)",
           "pump_3_power_watts": "Příkon čerpadla 3 (W)",
@@ -518,6 +520,9 @@
     "number": {
       "target_desired_temperature": {
         "name": "Cílená teplota"
+      },
+      "update_interval": {
+        "name": "Interval aktualizace dat"
       }
     },
     "binary_sensor": {

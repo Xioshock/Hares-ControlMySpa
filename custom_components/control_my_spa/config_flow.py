@@ -3,14 +3,16 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from .ControlMySpa import ControlMySpa
-from .const import DOMAIN
+from .const import DEFAULT_UPDATE_INTERVAL_SECONDS, DOMAIN, UPDATE_INTERVAL_SECONDS_KEY
 from .options_flow import ControlMySpaOptionsFlowHandler
 from .flow_helpers import (
     async_verify_spa_dashboard,
     build_available_spas,
+    get_update_interval_seconds,
     log_spa_list,
     resolve_spa_id,
     spa_selection_schema_dict,
+    update_interval_selector,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,7 +24,7 @@ class ControlMySpaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self):
         self._username = None
         self._password = None
-        self._update_interval = None
+        self._update_interval_seconds = None
         self._spa_client = None
         self._reconfigure_entry = None
 
@@ -32,7 +34,9 @@ class ControlMySpaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._username = user_input["username"]
             self._password = user_input["password"]
-            self._update_interval = user_input.get("updateintervalminutes", 1)
+            self._update_interval_seconds = int(
+                user_input.get(UPDATE_INTERVAL_SECONDS_KEY, DEFAULT_UPDATE_INTERVAL_SECONDS)
+            )
 
             _LOGGER.info("Config flow login for user=%s", self._username)
             self._spa_client = ControlMySpa(self._username, self._password)
@@ -53,7 +57,10 @@ class ControlMySpaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required("username"): str,
                 vol.Required("password"): str,
-                vol.Optional("updateintervalminutes", default=1): int,
+                vol.Optional(
+                    UPDATE_INTERVAL_SECONDS_KEY,
+                    default=DEFAULT_UPDATE_INTERVAL_SECONDS,
+                ): update_interval_selector(),
             }),
             errors=errors
         )
@@ -67,7 +74,10 @@ class ControlMySpaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._username = self._reconfigure_entry.data["username"]
         self._password = self._reconfigure_entry.data["password"]
-        self._update_interval = self._reconfigure_entry.data.get("updateintervalminutes", 1)
+        self._update_interval_seconds = get_update_interval_seconds(
+            self._reconfigure_entry.data,
+            self._reconfigure_entry.options,
+        )
         _LOGGER.info(
             "Reconfigure for user=%s stored spa_id=%s",
             self._username,
@@ -152,7 +162,7 @@ class ControlMySpaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data={
                 "username": self._username,
                 "password": self._password,
-                "updateintervalminutes": self._update_interval,
+                UPDATE_INTERVAL_SECONDS_KEY: self._update_interval_seconds,
                 "spa_id": spa_id,
             },
         )

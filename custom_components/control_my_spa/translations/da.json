@@ -23,7 +23,8 @@
         "data": {
           "username": "Brugernavn",
           "password": "Adgangskode",
-          "updateintervalminutes": "Opdateringsinterval (minutter)"
+          "updateintervalminutes": "Opdateringsinterval (minutter)",
+          "update_interval_seconds": "Dataopdateringsinterval"
         },
         "description": "Forbind til ControlMySpa",
         "title": "SPA"
@@ -53,6 +54,7 @@
         "data": {
           "spa_id": "SPA",
           "spa_id_manual": "SPA-ID manuelt (hvis det mangler på listen)",
+          "update_interval_seconds": "Dataopdateringsinterval",
           "pump_1_power_watts": "Pumpe 1 effektforbrug (W)",
           "pump_2_power_watts": "Pumpe 2 effektforbrug (W)",
           "pump_3_power_watts": "Pumpe 3 effektforbrug (W)",
@@ -504,6 +506,9 @@
     "number": {
       "target_desired_temperature": {
         "name": "Måltemperatur"
+      },
+      "update_interval": {
+        "name": "Dataopdateringsinterval"
       }
     },
     "binary_sensor": {
