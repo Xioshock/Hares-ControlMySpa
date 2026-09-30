@@ -331,21 +331,41 @@ class SpaTzlZoneLight(SpaSubscriberMixin, LightEntity):
             current_state = current_tzl_zone.get("state", "OFF") if current_tzl_zone else "OFF"
             _LOGGER.info("Current state of TZL Zone %s: %s", self._tzl_zone_data["zoneId"], current_state)
             
-            # After switching off, the API may keep state=NORMAL with intensity=0.
-            # Reactivate the zone in NORMAL mode for either off representation.
-            if current_tzl_zone is None or tzl_zone_is_off(current_tzl_zone):
-                _LOGGER.info("Zone is OFF, switching to NORMAL mode using setChromazoneColor with color_id=0")
+            # The controller has a separate global TZL power gate. If every
+            # zone is off, enable that gate first, then restore the zones that
+            # were intentionally off before the requested zone was enabled.
+            all_zones_were_off = not any(
+                tzl_zone_is_on(zone) for zone in data.get("tzlZones", [])
+            )
+            if all_zones_were_off:
+                _LOGGER.info("All TZL zones are off; enabling global TZL power")
+                power_response = await self._shared_data._client.setChromazonePower("ON")
+                if power_response is None:
+                    _LOGGER.warning("Function setChromazonePower (ON) is not supported")
+                    return
+
+                # Opening the global gate can illuminate every zone, so restore
+                # the requested zone and then the previous off states.
                 response_data = await self._shared_data._client.setChromazoneColor(
-                    0, 
+                    0,
                     self._tzl_zone_data["zoneId"]
                 )
-                
                 if response_data is None:
                     _LOGGER.warning("Function setChromazoneColor, parameter 0 is not supported")
-                    return
-                
-                # Ukončit nastavení po zapnutí zóny
-                return
+
+                for zone in data.get("tzlZones", []):
+                    zone_id = zone.get("zoneId")
+                    if zone_id != self._tzl_zone_data["zoneId"] and tzl_zone_is_off(zone):
+                        _LOGGER.info("Restoring TZL Zone %s to OFF", zone_id)
+                        await self._shared_data._client.setChromazoneBrightness(0, zone_id)
+            elif current_tzl_zone is None or tzl_zone_is_off(current_tzl_zone):
+                _LOGGER.info("Zone is OFF, switching to NORMAL mode using setChromazoneColor with color_id=0")
+                response_data = await self._shared_data._client.setChromazoneColor(
+                    0,
+                    self._tzl_zone_data["zoneId"]
+                )
+                if response_data is None:
+                    _LOGGER.warning("Function setChromazoneColor, parameter 0 is not supported")
             else:
                 _LOGGER.info("Zone is already ON (state: %s), skipping setChromazoneColor", current_state)
             

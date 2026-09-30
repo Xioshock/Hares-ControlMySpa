@@ -176,7 +176,6 @@ If your spa has **Chromazone / TZL** zones, you get lighting control in Home Ass
 
 | What | How |
 |------|-----|
-| All zones on/off | **Switch** — Chromazone power |
 | Per zone colour & brightness | **Light** — RGB |
 | Mode (Party, Relax, Wheel, …) | **Select** per zone |
 | Preset colours, intensity, speed | **Select** per zone |
